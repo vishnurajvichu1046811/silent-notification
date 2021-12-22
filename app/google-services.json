@@ -1,0 +1,91 @@
+{
+  "project_info": {
+    "project_number": "18437862340",
+    "firebase_url": "https://silentnotification-1d5c6-default-rtdb.firebaseio.com",
+    "project_id": "silentnotification-1d5c6",
+    "storage_bucket": "silentnotification-1d5c6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:18437862340:android:23e2f42bec4969a39d6a91",
+        "android_client_info": {
+          "package_name": "com.example.silentnotif2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "18437862340-1sqk9on7jvbfcqe3k9ca6pa59kueu6dd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.silentnotif2",
+            "certificate_hash": "c039bbde0d0d2c004b03c9826413c720fe84f481"
+          }
+        },
+        {
+          "client_id": "18437862340-t5r3fd97olsrn22t4irht54if33kiec8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpWcz-a7ugq7txlDLDxtACpAuFWw_PaOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "18437862340-t5r3fd97olsrn22t4irht54if33kiec8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "18437862340-n1tohbfap9lcfb4g04aek39qhpgdn8or.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.claysys.SilentNotificationSample"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:18437862340:android:67d4824919215fb49d6a91",
+        "android_client_info": {
+          "package_name": "com.example.silentnotification"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "18437862340-t5r3fd97olsrn22t4irht54if33kiec8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpWcz-a7ugq7txlDLDxtACpAuFWw_PaOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "18437862340-t5r3fd97olsrn22t4irht54if33kiec8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "18437862340-n1tohbfap9lcfb4g04aek39qhpgdn8or.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.claysys.SilentNotificationSample"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
