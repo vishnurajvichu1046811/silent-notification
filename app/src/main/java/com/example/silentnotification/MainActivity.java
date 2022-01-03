@@ -1,9 +1,11 @@
 package com.example.silentnotification;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -12,6 +14,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.provider.Settings;
@@ -23,6 +26,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.silentnotification.databinding.ActivityMainBinding;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -52,6 +56,12 @@ public class MainActivity extends AppCompatActivity {
 
         if(!checkPermissions())
         requestPermissions();
+        else
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            if(!checkBackgroundLocPermission()) {
+                //Snackbar.make(findViewById(R.id.main), R.string.allow_loc_bg, Snackbar.LENGTH_LONG).show();
+                showLocationMessage();
+            }
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,10 +93,48 @@ public class MainActivity extends AppCompatActivity {
                         // Log and toast
                         //String msg = getString(R.string.msg_token_fmt, token);
                         Log.d("TAG", "msg");
-                        Toast.makeText(MainActivity.this, "msg", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "msg", Toast.LENGTH_SHORT).show();
                     }
                 });
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+       /* if(!checkPermissions())
+            requestPermissions();
+        else
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            if(!checkBackgroundLocPermission()) {
+                //Snackbar.make(findViewById(R.id.main), R.string.allow_loc_bg, Snackbar.LENGTH_LONG).show();
+                showLocationMessage();
+            }*/
+    }
+
+    private void showLocationMessage() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setMessage(getString(R.string.allow_loc_bg));
+        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                String[] permissionsRequired = new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                        , Manifest.permission.ACCESS_COARSE_LOCATION
+                        , Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                };
+                ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, REQUEST_PERMISSIONS_REQUEST_CODE);
+            }
+        });
+        //dialog.setCancelable(false);
+        dialog.show();
+
+    }
+
+    private boolean checkBackgroundLocPermission() {
+        return  PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION);
     }
 
     @Override
@@ -128,6 +176,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
+
+        String[] permissionsRequired = new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION
+                , Manifest.permission.ACCESS_COARSE_LOCATION
+                , Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        };
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.ACCESS_FINE_LOCATION);
@@ -150,14 +204,24 @@ public class MainActivity extends AppCompatActivity {
                         }
                     })
                     .show();*/
+            //ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, REQUEST_PERMISSIONS_REQUEST_CODE);
+
+        ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_PERMISSIONS_REQUEST_CODE);
         } else {
             Log.i("TAG", "Requesting permission");
             // Request permission. It's possible this can be auto answered if device policy
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
+
+            //ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, REQUEST_PERMISSIONS_REQUEST_CODE);
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_PERMISSIONS_REQUEST_CODE);
+            /*ActivityCompat.requestPermissions(MainActivity.this,
+                    PERMISSIONS,
+                    REQUEST_PERMISSIONS_REQUEST_CODE);*/
         }
     }
 
@@ -177,8 +241,13 @@ public class MainActivity extends AppCompatActivity {
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted.
                // mService.requestLocationUpdates();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    if(!checkBackgroundLocPermission()) {
+                        //Snackbar.make(findViewById(R.id.main), R.string.allow_loc_bg, Snackbar.LENGTH_LONG).show();
+                        showLocationMessage();
+                    }
             } else {
-                // Permission denied.
+                //Permission denied.
                 //setButtonsState(false);
                 Intent intent = new Intent();
                 intent.setAction(
@@ -188,7 +257,9 @@ public class MainActivity extends AppCompatActivity {
                 intent.setData(uri);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-               /* Snackbar.make(
+                RecyclerView rv = null;
+                rv.getLayoutManager().getChildCount();
+                /* Snackbar.make(
                         findViewById(R.id.activity_main),
                         R.string.permission_denied_explanation,
                         Snackbar.LENGTH_INDEFINITE)
@@ -210,6 +281,4 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-
 }
