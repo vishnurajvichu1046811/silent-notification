@@ -11,6 +11,7 @@
   - foreground
   - background
   - closed state
+  - 
 -> Managed Fetching device location based on GPS or network provider
 
 -> Managed sending current device location into firebase realtime DB when a silent notification receives
