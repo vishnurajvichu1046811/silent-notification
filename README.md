@@ -2,7 +2,7 @@
 
 ## DEMO APP WITH SILENT NOTIFICATION FEATURE IMPLEMENTED
 
-# Features
+## Features
 * Managed notification when app is in
         - foreground
         - background
@@ -11,7 +11,7 @@
 
 * Managed sending current device location into firebase realtime DB when a silent notification receives
 
-# PAYLOAD STRUCTURE TOBE SENT FROM BACKEND
+## PAYLOAD STRUCTURE TOBE SENT FROM BACKEND
 {
 "to":"/topics/fetch_location",
 
@@ -25,8 +25,8 @@
 }
 }
 
-# NOTE : Should have “data” payload only and shouldnt have “notification” payload
-# NOTE : Is_silent_notification - to check silent notification or not.
+## NOTE : Should have “data” payload only and shouldnt have “notification” payload
+## NOTE : Is_silent_notification - to check silent notification or not.
 
-# Reference Links :
+## Reference Links :
 https://stackoverflow.com/questions/37947541/what-is-the-difference-between-firebase-push-notifications-and-fcm-messages
