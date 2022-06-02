@@ -68,10 +68,12 @@ public class AppController extends Application {
                 GPSTracker gps = new GPSTracker(context);
                 double latitude = 0.0;
                 double longitude = 0.0;
+                double altitude = 0.0;
                 latitude = gps.getLatitude();
                 longitude = gps.getLongitude();
+                altitude = gps.getAltitude();
                 FirebaseRealtimeDB realtimeDB = new FirebaseRealtimeDB();
-                realtimeDB.addLocation("user1",latitude+"",longitude+"",new Timestamp(new Date().getTime())+"");
+                realtimeDB.addLocation("user2",latitude+"",longitude+"",altitude+"",new Timestamp(new Date().getTime())+"");
 
             }
         }

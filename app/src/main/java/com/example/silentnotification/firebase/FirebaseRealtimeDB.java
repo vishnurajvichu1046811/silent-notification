@@ -12,11 +12,11 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class FirebaseRealtimeDB {
 
-    public void addLocation(String userName,String latitude,String longitude,String dateTime){
+    public void addLocation(String userName,String latitude,String longitude,String altitude,String dateTime){
         if(latitude.equalsIgnoreCase("0.0") || longitude.equalsIgnoreCase("0.0"))
             return;
 
-        LocationData locationData = new LocationData(userName,latitude,longitude,dateTime);
+        LocationData locationData = new LocationData(userName,latitude,longitude,altitude,dateTime);
         DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
         DatabaseReference usersRef = rootRef.child("location-android");
         usersRef.child("location").push().setValue(locationData).addOnCompleteListener(new OnCompleteListener<Void>() {

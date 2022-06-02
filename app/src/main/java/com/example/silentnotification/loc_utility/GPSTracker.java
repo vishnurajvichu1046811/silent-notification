@@ -36,6 +36,7 @@ public class GPSTracker extends Service implements LocationListener {
     Location location; // location
     double latitude; // latitude
     double longitude; // longitude
+    double altitude;
 
     // The minimum distance to change Updates in meters
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 1; // 10 meters
@@ -68,6 +69,7 @@ public class GPSTracker extends Service implements LocationListener {
 
             // getting network status
             isNetworkEnabled = locationManager
+
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
@@ -165,6 +167,21 @@ public class GPSTracker extends Service implements LocationListener {
 
 
         return longitude;
+    }
+
+    public double getAltitude() {
+        Log.d("GPSTracker", "getLongitude call");
+        if (location != null) {
+            altitude = location.getAltitude();
+        }
+
+        // return longitude
+
+
+        System.out.println("responsel:::" + altitude);
+
+
+        return altitude;
     }
 
     /**

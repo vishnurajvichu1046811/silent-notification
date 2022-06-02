@@ -4,6 +4,7 @@ public class LocationData {
     public String userName;
     public String latitude;
     public String longitude;
+    public String altitude;
     public String dateTime;
 
     public String getLatitude() {
@@ -22,6 +23,14 @@ public class LocationData {
         this.longitude = longitude;
     }
 
+    public String getAltitude() {
+        return altitude;
+    }
+
+    public void setAltitude(String altitude) {
+        this.altitude = altitude;
+    }
+
     public String getDateTime() {
         return dateTime;
     }
@@ -30,10 +39,11 @@ public class LocationData {
         this.dateTime = dateTime;
     }
 
-    public LocationData(String userName, String latitude, String longitude, String dateTime) {
+    public LocationData(String userName, String latitude, String longitude,String altitude, String dateTime) {
         this.userName = userName;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.altitude = altitude;
         this.dateTime = dateTime;
     }
 
