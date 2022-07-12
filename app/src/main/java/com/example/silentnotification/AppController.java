@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -73,7 +74,8 @@ public class AppController extends Application {
                 longitude = gps.getLongitude();
                 altitude = gps.getAltitude();
                 FirebaseRealtimeDB realtimeDB = new FirebaseRealtimeDB();
-                realtimeDB.addLocation("user2",latitude+"",longitude+"",altitude+"",new Timestamp(new Date().getTime())+"");
+                String Username = Settings.Global.getString(getContentResolver(), Settings.Global.DEVICE_NAME);
+                realtimeDB.addLocation(Username,latitude+"",longitude+"",altitude+"",new Timestamp(new Date().getTime())+"");
 
             }
         }

@@ -47,6 +47,7 @@ public class GPSTracker extends Service implements LocationListener {
 
     protected LocationManager locationManager;
     public GPSTracker(){}
+    public MyLocationListener myLocationListener;
 
     public GPSTracker(Context context) {
         this.mContext = context;
@@ -54,6 +55,10 @@ public class GPSTracker extends Service implements LocationListener {
         Log.d("GPSTracker", "GPSTracker call");
     }
 
+    public void setLocationChangeListener(MyLocationListener locationChangeListener){
+        if(locationChangeListener != null)
+            this.myLocationListener = locationChangeListener;
+    }
 
     @SuppressLint("MissingPermission")
     public Location getLocation() {
@@ -160,8 +165,6 @@ public class GPSTracker extends Service implements LocationListener {
             longitude = location.getLongitude();
         }
 
-        // return longitude
-
 
         System.out.println("responsel:::" + longitude);
 
@@ -174,12 +177,7 @@ public class GPSTracker extends Service implements LocationListener {
         if (location != null) {
             altitude = location.getAltitude();
         }
-
-        // return longitude
-
-
         System.out.println("responsel:::" + altitude);
-
 
         return altitude;
     }
@@ -242,6 +240,9 @@ public class GPSTracker extends Service implements LocationListener {
         this.location = location;
         latitude = location.getLatitude();
         longitude = location.getLongitude();
+
+        if(myLocationListener != null)
+            myLocationListener.onLocationChanged(location);
     }
 
     @Override
