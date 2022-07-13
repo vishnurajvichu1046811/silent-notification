@@ -32,19 +32,16 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.provider.Settings;
-import android.util.Log;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.util.Log;
+import android.widget.Toast;
+
 import com.example.silentnotification.MainActivity;
 import com.example.silentnotification.R;
-import com.example.silentnotification.firebase.FirebaseRealtimeDB;
-import com.example.silentnotification.loc_utility.GPSTracker;
-import com.example.silentnotification.loc_utility.MyLocationListener;
+import com.example.silentnotification.loc_utility.Utils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -53,15 +50,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;/*
-import com.firebase.geofire.GeoFire;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;*/
+import com.google.android.gms.tasks.Task;
 
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,9 +72,9 @@ import java.util.Map;
 public class LocationUpdatesService extends Service {
 
     private static final String PACKAGE_NAME =
-            "com.google.android.gms.location.sample.locationupdatesforegroundservice";
+            "com.example.silentnotification.service";
 
-    private static final String TAG = "FetchLocation";
+    private static final String TAG = "resPOINT";
 
     /**
      * The name of the channel for notifications.
@@ -135,6 +125,13 @@ public class LocationUpdatesService extends Service {
      */
     private FusedLocationProviderClient mFusedLocationClient;
 
+    /**
+     * Callback for changes in location.
+     */
+    private LocationCallback mLocationCallback;
+
+    private Handler mServiceHandler;
+
     Double latitude, longitude;
 
     /**
@@ -151,13 +148,20 @@ public class LocationUpdatesService extends Service {
     public void onCreate() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+        mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                onNewLocation(locationResult.getLastLocation());
+            }
+        };
 
         createLocationRequest();
+        //getLastLocation();
 
-/*
         HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
-        mServiceHandler = new Handler(handlerThread.getLooper());*/
+        mServiceHandler = new Handler(handlerThread.getLooper());
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         // Android O requires a Notification Channel.
@@ -171,8 +175,6 @@ public class LocationUpdatesService extends Service {
             mNotificationManager.createNotificationChannel(mChannel);
         }
     }
-
-
 
     @SuppressWarnings("deprecation")
     @Override
@@ -209,6 +211,7 @@ public class LocationUpdatesService extends Service {
         stopForeground(true);
         mChangingConfiguration = false;
 
+
         return mBinder;
     }
 
@@ -235,13 +238,22 @@ public class LocationUpdatesService extends Service {
         // Called when the last client (MainActivity in case of this sample) unbinds from this
         // service. If this method is called due to a configuration change in MainActivity, we
         // do nothing. Otherwise, we make this service a foreground service.
-        //if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
+        if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
             Log.d(TAG, "Starting foreground service");
+            /*
+            // TODO(developer). If targeting O, use the following code.
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
+                mNotificationManager.startServiceInForeground(new Intent(this,
+                        LocationUpdatesService.class), NOTIFICATION_ID, getNotification());
+            } else {
+                startForeground(NOTIFICATION_ID, getNotification());
+            }
+             */
 
             startForeground(NOTIFICATION_ID, getNotification());
 
 
-       // }
+        }
         return true; // Ensures onRebind() is called when a client re-binds.
     }
 
@@ -250,7 +262,7 @@ public class LocationUpdatesService extends Service {
     @SuppressWarnings("deprecation")
     @Override
     public void onDestroy() {
-        //mServiceHandler.removeCallbacksAndMessages(null);
+        mServiceHandler.removeCallbacksAndMessages(null);
     }
 
     /**
@@ -259,23 +271,13 @@ public class LocationUpdatesService extends Service {
      */
     public void requestLocationUpdates() {
         Log.i(TAG, "Requesting location updates");
-        //Utils.setRequestingLocationUpdates(this, true);
+        Utils.setRequestingLocationUpdates(this, true);
         startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
         try {
-            GPSTracker gpsTracker = new GPSTracker(this);
-            gpsTracker.setLocationChangeListener(new MyLocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    Log.e("onLocationChanged : ","onLocationChanged");
-
-                    FirebaseRealtimeDB realtimeDB = new FirebaseRealtimeDB();
-                    String Username = Settings.Global.getString(getContentResolver(), Settings.Global.DEVICE_NAME);
-                    realtimeDB.addLocation(Username,location.getLatitude()+"",location.getLongitude()+"",location.getAltitude()+"",new Timestamp(new Date().getTime())+"");
-
-                }
-            });
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest,
+                    mLocationCallback, Looper.myLooper());
         } catch (SecurityException unlikely) {
-            //Utils.setRequestingLocationUpdates(this, false);
+            Utils.setRequestingLocationUpdates(this, false);
             Log.d(TAG, "Lost location permission. Could not request updates. " + unlikely);
         }
     }
@@ -287,11 +289,11 @@ public class LocationUpdatesService extends Service {
     public void removeLocationUpdates() {
         Log.i(TAG, "Removing location updates");
         try {
-            //mFusedLocationClient.removeLocationUpdates(mLocationCallback);
-            //Utils.setRequestingLocationUpdates(this, false);
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            Utils.setRequestingLocationUpdates(this, false);
             stopSelf();
         } catch (SecurityException unlikely) {
-            //Utils.setRequestingLocationUpdates(this, true);
+            Utils.setRequestingLocationUpdates(this, true);
             Log.d(TAG, "Lost location permission. Could not remove updates. " + unlikely);
         }
     }
@@ -302,8 +304,8 @@ public class LocationUpdatesService extends Service {
     private Notification getNotification() {
         Intent intent = new Intent(this, LocationUpdatesService.class);
 
-        //CharSequence text = Utils.getLocationText(mLocation);
-        CharSequence text = "Notification for Foreground service";
+        CharSequence text = Utils.getLocationText(mLocation);
+
         // Extra to help us figure out if we arrived in onStartCommand via the notification or not.
         intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
 
@@ -316,12 +318,12 @@ public class LocationUpdatesService extends Service {
                 new Intent(this, MainActivity.class), 0);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .addAction(R.drawable.ic_launcher_background, "Notification",
+                .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
                         activityPendingIntent)
-                /*.addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
-                        servicePendingIntent)*/
+                .addAction(R.drawable.ic_cancel, getString(R.string.remove_location_updates),
+                        servicePendingIntent)
                 .setContentText(text)
-                .setContentTitle("Notification")
+                .setContentTitle(Utils.getLocationTitle(this))
                 .setOngoing(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -336,6 +338,49 @@ public class LocationUpdatesService extends Service {
 
         return builder.build();
     }
+
+    private void getLastLocation() {
+        try {
+            mFusedLocationClient.getLastLocation()
+                    .addOnCompleteListener(new OnCompleteListener<Location>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Location> task) {
+                            if (task.isSuccessful() && task.getResult() != null) {
+                                mLocation = task.getResult();
+                            } else {
+                                Log.w(TAG, "Failed to get location.");
+                            }
+                        }
+                    });
+        } catch (SecurityException unlikely) {
+            Log.d(TAG, "Lost location permission." + unlikely);
+        }
+    }
+
+    private void onNewLocation(Location location) {
+        Log.d(TAG, "New location: " + location);
+
+        mLocation = location;
+
+        // Notify anyone listening for broadcasts about the new location.
+        Intent intent = new Intent(ACTION_BROADCAST);
+        intent.putExtra(EXTRA_LOCATION, location);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+        // Update notification content if running as a foreground service.
+        if (serviceIsRunningInForeground(this)) {
+            mNotificationManager.notify(NOTIFICATION_ID, getNotification());
+
+            // Getting location when notification was call.
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+
+            // Here using to call Save to serverMethod
+            //SavetoServer();
+
+        }
+    }
+
     /**
      * Sets the location request parameters.
      */
@@ -374,4 +419,5 @@ public class LocationUpdatesService extends Service {
         }
         return false;
     }
+
 }
