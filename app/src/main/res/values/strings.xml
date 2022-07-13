@@ -11,4 +11,7 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="no_internet_message">No Internet available</string>
     <string name="allow_loc_bg">Allow location permission always to get more security</string>
+    <string name="location_updated">location updated</string>
+    <string name="launch_activity">launch app</string>
+    <string name="remove_location_updates">cancel</string>
 </resources>

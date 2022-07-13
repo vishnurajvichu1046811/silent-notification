@@ -36,11 +36,15 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.example.silentnotification.MainActivity;
 import com.example.silentnotification.R;
+import com.example.silentnotification.firebase.FirebaseRealtimeDB;
+import com.example.silentnotification.loc_utility.GPSTracker;
+import com.example.silentnotification.loc_utility.MyLocationListener;
 import com.example.silentnotification.loc_utility.Utils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -52,6 +56,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,14 +129,14 @@ public class LocationUpdatesService extends Service {
     /**
      * Provides access to the Fused Location Provider API.
      */
-    private FusedLocationProviderClient mFusedLocationClient;
+    //private FusedLocationProviderClient mFusedLocationClient;
 
     /**
      * Callback for changes in location.
      */
-    private LocationCallback mLocationCallback;
+    //private LocationCallback mLocationCallback;
 
-    private Handler mServiceHandler;
+    //private Handler mServiceHandler;
 
     Double latitude, longitude;
 
@@ -138,6 +144,7 @@ public class LocationUpdatesService extends Service {
      * The current location.
      */
     private Location mLocation;
+    GPSTracker gpsTracker;
 
     @SuppressWarnings("deprecation")
     public LocationUpdatesService() {
@@ -146,7 +153,7 @@ public class LocationUpdatesService extends Service {
     @SuppressWarnings("deprecation")
     @Override
     public void onCreate() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        /*mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         mLocationCallback = new LocationCallback() {
             @Override
@@ -154,14 +161,14 @@ public class LocationUpdatesService extends Service {
                 super.onLocationResult(locationResult);
                 onNewLocation(locationResult.getLastLocation());
             }
-        };
+        };*/
 
         createLocationRequest();
         //getLastLocation();
 
         HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
-        mServiceHandler = new Handler(handlerThread.getLooper());
+        //mServiceHandler = new Handler(handlerThread.getLooper());
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         // Android O requires a Notification Channel.
@@ -174,6 +181,15 @@ public class LocationUpdatesService extends Service {
             // Set the Notification Channel for the Notification Manager.
             mNotificationManager.createNotificationChannel(mChannel);
         }
+
+
+        gpsTracker = new GPSTracker(this);
+        gpsTracker.setLocationChangeListener(new MyLocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                onNewLocation(location);
+            }
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -262,7 +278,7 @@ public class LocationUpdatesService extends Service {
     @SuppressWarnings("deprecation")
     @Override
     public void onDestroy() {
-        mServiceHandler.removeCallbacksAndMessages(null);
+        gpsTracker.setLocationChangeListener(null);
     }
 
     /**
@@ -274,8 +290,6 @@ public class LocationUpdatesService extends Service {
         Utils.setRequestingLocationUpdates(this, true);
         startService(new Intent(getApplicationContext(), LocationUpdatesService.class));
         try {
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest,
-                    mLocationCallback, Looper.myLooper());
         } catch (SecurityException unlikely) {
             Utils.setRequestingLocationUpdates(this, false);
             Log.d(TAG, "Lost location permission. Could not request updates. " + unlikely);
@@ -289,7 +303,7 @@ public class LocationUpdatesService extends Service {
     public void removeLocationUpdates() {
         Log.i(TAG, "Removing location updates");
         try {
-            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            //mFusedLocationClient.removeLocationUpdates(mLocationCallback);
             Utils.setRequestingLocationUpdates(this, false);
             stopSelf();
         } catch (SecurityException unlikely) {
@@ -339,24 +353,6 @@ public class LocationUpdatesService extends Service {
         return builder.build();
     }
 
-    private void getLastLocation() {
-        try {
-            mFusedLocationClient.getLastLocation()
-                    .addOnCompleteListener(new OnCompleteListener<Location>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Location> task) {
-                            if (task.isSuccessful() && task.getResult() != null) {
-                                mLocation = task.getResult();
-                            } else {
-                                Log.w(TAG, "Failed to get location.");
-                            }
-                        }
-                    });
-        } catch (SecurityException unlikely) {
-            Log.d(TAG, "Lost location permission." + unlikely);
-        }
-    }
-
     private void onNewLocation(Location location) {
         Log.d(TAG, "New location: " + location);
 
@@ -376,9 +372,17 @@ public class LocationUpdatesService extends Service {
             longitude = location.getLongitude();
 
             // Here using to call Save to serverMethod
-            //SavetoServer();
+            SavetoServer(location);
 
         }
+    }
+
+    private void SavetoServer(Location location) {
+        FirebaseRealtimeDB realtimeDB = new FirebaseRealtimeDB();
+        String Username = Settings.Global.getString(getContentResolver(), Settings.Global.DEVICE_NAME);
+        realtimeDB.addLocation(Username,location.getLatitude()+"",location.getLongitude()+"",location.getAltitude()+"",new Timestamp(new Date().getTime())+"");
+
+
     }
 
     /**

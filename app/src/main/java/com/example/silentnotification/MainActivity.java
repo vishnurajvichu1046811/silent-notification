@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.example.silentnotification.service.ForegroundService;
 import com.example.silentnotification.service.LocationUpdatesService;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -21,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
@@ -28,6 +30,10 @@ import android.view.View;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -41,12 +47,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
     private final int REQUEST_LOCATION_PERMISSION = 1;
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+
+    // A reference to the service used to get location updates.
     private LocationUpdatesService mService = null;
+
+    // Tracks the bound state of the service.
+    private boolean mBound = false;
     // Monitors the state of the connection to the service.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -54,13 +65,13 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
             mService = binder.getService();
-            //mBound = true;
+            mBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mService = null;
-            //mBound = false;
+            mBound = false;
         }
     };
 
@@ -70,16 +81,12 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
+        //ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         setSupportActionBar(binding.toolbar);
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-
-        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection,
-                Context.BIND_AUTO_CREATE);
-
 
 
         if(!checkPermissions())
@@ -117,13 +124,31 @@ public class MainActivity extends AppCompatActivity {
 
                         // Get new FCM registration token
                         String token = task.getResult();
-
-                        // Log and toast
-                        //String msg = getString(R.string.msg_token_fmt, token);
                         Log.d("TAG", "msg");
-                        //Toast.makeText(MainActivity.this, "msg", Toast.LENGTH_SHORT).show();
                     }
                 });
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bindService(new Intent(this, LocationUpdatesService.class), mServiceConnection,
+                Context.BIND_AUTO_CREATE);
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mService.requestLocationUpdates();
+        if (mBound) {
+            // Unbind from the service. This signals to the service that this activity is no longer
+            // in the foreground, and the service can respond by promoting itself to a foreground
+            // service.
+            unbindService(mServiceConnection);
+            mBound = false;
+        }
 
     }
 
@@ -155,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(MainActivity.this, permissionsRequired, REQUEST_PERMISSIONS_REQUEST_CODE);
             }
         });
-        //dialog.setCancelable(false);
         dialog.show();
 
     }
@@ -163,9 +187,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //ContextCompat.startForegroundService(this,new Intent(this, LocationService.class));
-
-        mService.requestLocationUpdates();
     }
 
     private boolean checkBackgroundLocPermission() {
@@ -317,4 +338,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 }
